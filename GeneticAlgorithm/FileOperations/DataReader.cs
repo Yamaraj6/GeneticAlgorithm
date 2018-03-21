@@ -4,7 +4,7 @@ using System.IO;
 
 namespace Genetic.FileOperations
 {
-    class MatrixReader
+    class DataReader
     {
         public static List<int[,]> GetMatrices(string fileName)
         {

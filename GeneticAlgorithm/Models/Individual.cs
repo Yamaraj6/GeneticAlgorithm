@@ -1,90 +1,84 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Genetic.Models
 {
-    public class Individual
+    public class Individual : IIndividual<int, int>
     {
-        public const int PLACES_ROW = 0;
-        public const int FACTORIES_ROW = 1;
-        public const int ROWS_COUNT = 2;
-        public const int MULTIPLIER_AMOUNT_OF_DRAWS = 2;
+        private IGenotype<int, int> genotype; // factoriesOnLocations
+        private float fitness;
+        private ICache<int, int> cache;
 
-
-        public int[,] genotype { get; private set; }  // factoriesOnLocations
-        public float fitness { get; private set; }
-        private MatrixData matrixData;
-
-        public Individual(MatrixData matrixData)
+        public Individual(ICache<int, int> cache)
         {
-            this.matrixData = matrixData;
-            RandomIndividual();
-            CalculateFitness();
+            this.cache = cache;
+            genotype = new Genotype(cache);
+            fitness = CalculateFitness();
         }
 
-        public Individual(int[,] genotype, MatrixData matrixData)
+        public Individual(IGenotype<int, int> genotype, ICache<int,int> cache)
         {
-            this.matrixData = matrixData;
+            this.cache = cache;
             this.genotype = genotype;
-            CalculateFitness();
+            fitness = CalculateFitness();
         }
-        
-        private void RandomIndividual()
-        {
-            CreateDefaultIndividual();
 
-            for (int i = 0; i < matrixData.size * MULTIPLIER_AMOUNT_OF_DRAWS; i++)
+        public IIndividual<int, int> CreateNewIndividual(ICache<int, int> cache)
+        {
+            return new Individual(cache);
+        }
+
+        public IIndividual<int, int> CreateNewIndividual(IGenotype<int, int> genotype, ICache<int, int> cache)
+        {
+            return new Individual(genotype, cache);
+        }
+
+        public IGenotype<int,int> GetGenotype() {return genotype; }
+        public int GetGenotypeSize() { return genotype.GetGenotypeSize(); }
+        public float GetFitness() { return fitness; } 
+
+        public IIndividual<int, int> Crossover(IIndividual<int, int> parent)
+        {
+            int _crossoverPoint = cache.GetRandomNext() % parent.GetGenotypeSize();
+            var _childGenotype = new List<IGene<int, int>>();
+            for (int i = 0; i < GetGenotypeSize(); i++)
             {
-                Mutates();
+                if (i < _crossoverPoint)
+                {
+                    _childGenotype.Add(new Gene<int, int>
+                        (genotype.GetGene(i).GetKey(),
+                        genotype.GetGene(i).GetValue()));
+                }
+                else
+                {
+                    _childGenotype.Add(new Gene<int, int>
+                        (parent.GetGenotype().GetGene(i).GetKey(),
+                        parent.GetGenotype().GetGene(i).GetValue()));
+                }
             }
+            return new Individual(new Genotype(_childGenotype, 0, cache), cache);
         }
 
         public void Mutates()
         {
-            Random _random = new Random();
-
-            int[] _places = new int[2];
-            _places[0] = _random.Next() % matrixData.size;
-
-            do
-            {
-                _places[1] = _random.Next() % matrixData.size;
-            }
-            while (_places[0] == _places[1]);
-
-            var a = genotype[_places[0], FACTORIES_ROW];
-            genotype[_places[0], FACTORIES_ROW] = genotype[_places[1], FACTORIES_ROW];
-            genotype[_places[1], FACTORIES_ROW] = a;
+            genotype.Mutates();
+            fitness = CalculateFitness();
         }
 
-        private void CreateDefaultIndividual()
+        private float CalculateFitness()
         {
-            genotype = new int[matrixData.size, ROWS_COUNT];
+            float _fitness = 0;
 
-            for (int y = 0; y < ROWS_COUNT; y++)
+            if (cache.TryGetFitness(genotype, out _fitness))
             {
-                for (int x = 0; x < matrixData.size; x++)
-                {
-                    genotype[x, y] = x;
-                }
+                return _fitness;
             }
+            
+            cache.AddCalculatedFitness(genotype.ToString(), _fitness);
+            return _fitness;
         }
 
-        private void CalculateFitness()
-        {
-            fitness = 0;
-
-            for (int y = 0; y < matrixData.size; y++)
-            {
-                for (int x = y + 1; x < matrixData.size; x++)
-                {
-                    fitness += matrixData.distance[x, y] *
-                        (matrixData.flow[genotype[y, 1], genotype[x, 1]] +
-                        matrixData.flow[genotype[x, 1], genotype[y, 1]]);
-                }
-            }
-        }
-
-        public bool IsBetterFitness(float othersFitness)
+        public bool IsBetter(float othersFitness)
         {
             return fitness < othersFitness;
         }
@@ -92,7 +86,7 @@ namespace Genetic.Models
         override public string ToString()
         {
             return "Fitness: " + fitness + "\n" + 
-                genotype.MatrixToString(2, matrixData.size);
+                genotype.ToString();
         }
     }
 }

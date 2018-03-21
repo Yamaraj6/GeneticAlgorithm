@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Genetic
 {
@@ -16,7 +17,7 @@ namespace Genetic
             {
                 for (int x = 0; x < numberOfRows; x++)
                 {
-                    txtMatrix+=matrix[x, y] + " ";
+                    txtMatrix += matrix[x, y] + " ";
                 }
                 txtMatrix += "\n";
             }
