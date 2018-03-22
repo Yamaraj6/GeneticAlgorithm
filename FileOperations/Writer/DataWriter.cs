@@ -1,16 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
-namespace Genetic.FileOperations
+namespace FileOperations.Writer
 {
-    class DataWriter
+    public class DataWriter
     {
         public static void SaveDataToCsv(string data, string fileName)
         {
             File.WriteAllText(Environment.GetFolderPath
-                (Environment.SpecialFolder.DesktopDirectory) + 
+                (Environment.SpecialFolder.DesktopDirectory)+"\\GenticAlgorithmResults" + 
                 "\\"+ fileName + ".csv", data);
         }
     }

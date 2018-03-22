@@ -1,4 +1,4 @@
-﻿namespace Genetic
+﻿namespace Genetic.Models
 {
     public interface IIndividual<GeneKey, GeneValue>
     {

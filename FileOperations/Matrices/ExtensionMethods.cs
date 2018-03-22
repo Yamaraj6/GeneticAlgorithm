@@ -1,7 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 
-namespace Genetic
+namespace FileOperations.Matrices
 {
     public static class ExtensionMethods
     {

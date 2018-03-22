@@ -1,9 +1,7 @@
-﻿using Genetic.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace Genetic
+namespace Genetic.Models.FactoryPlacementProblem
 {
     public class Genotype : IGenotype<int,int>
     {
@@ -21,6 +19,15 @@ namespace Genetic
             this.cache = cache;
             this.genotype = genotype;
             FixGenotype(crossoverPoint);
+        }
+        public Genotype(IGenotype<int, int> genotype, ICache<int, int> cache)
+        {
+            this.cache = cache;
+            this.genotype = new List<IGene<int, int>>();
+            for (int i = 0; i < genotype.GetGenotypeSize(); i++)
+            {
+                this.genotype.Add(new Gene<int, int>(genotype.GetGene(i).GetKey(), genotype.GetGene(i).GetValue()));
+            }
         }
 
         private void CreateRandomGenotype()

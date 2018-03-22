@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Genetic.Models
 {
@@ -11,10 +10,7 @@ namespace Genetic.Models
         public int generationNumber { get; private set; }
 
         private ICache<GeneKey, GeneValue> cache;
-
-        public IIndividual<GeneKey, GeneValue> bestIndividual { get; private set; }
-        public IIndividual<GeneKey, GeneValue> worstIndividual { get; private set; }
-        public float averageFitness { get; private set; }
+        private GenerationFitnesses<GeneKey, GeneValue> generationFitnesses;
 
         public Generation(int populationSize, int generationNumber,
             ICache<GeneKey, GeneValue> cache)
@@ -22,6 +18,7 @@ namespace Genetic.Models
             this.populationSize = populationSize;
             this.generationNumber = generationNumber;
             this.cache = cache;
+            generationFitnesses = new GenerationFitnesses<GeneKey, GeneValue>();
             population = new List<IIndividual<GeneKey, GeneValue>>();
         }
 
@@ -29,9 +26,10 @@ namespace Genetic.Models
         ICache<GeneKey, GeneValue> cache)
         {
             this.populationSize = populationSize;
-            this.generationNumber = 0;
+            this.generationNumber = 1;
             this.cache = cache;
             population = new List<IIndividual<GeneKey, GeneValue>>();
+            generationFitnesses = new GenerationFitnesses<GeneKey, GeneValue>();
             population.Add(individual);
             FillPopulation();
         }
@@ -42,7 +40,7 @@ namespace Genetic.Models
             {
                 population.Add(population[0].CreateNewIndividual(cache));
             }
-            CountRates();
+            generationFitnesses.CountRates(population);
         }
 
         public IIndividual<GeneKey, GeneValue>[] Selection(GeneticParameters geneticParameters)
@@ -89,15 +87,15 @@ namespace Genetic.Models
             float _fitnessesSum = 0;
             foreach (var individual in population)
             {
-                _fitnessesSum += (worstIndividual.GetFitness()/individual.GetFitness());
+                _fitnessesSum += (generationFitnesses.worstFitness / individual.GetFitness());
             }
 
             for (int i = 0; i < _selectedParents.Length; i++)
             {
                 var _randIndividual = cache.GetRandomNext() % _fitnessesSum;
-                foreach(var individual in population)
+                foreach (var individual in population)
                 {
-                    _randIndividual -= (worstIndividual.GetFitness() / individual.GetFitness());
+                    _randIndividual -= (generationFitnesses.worstFitness / individual.GetFitness());
                     if (_randIndividual <= 0)
                     {
                         _selectedParents[i] = individual;
@@ -112,10 +110,10 @@ namespace Genetic.Models
         {
             var _selectedParents = new IIndividual<GeneKey, GeneValue>[numberOfParents];
             float _fitnessesSum = 0;
-            var min = Math.Abs(worstIndividual.GetFitness() - bestIndividual.GetFitness()) / populationSize;
+            var min = Math.Abs((generationFitnesses.worstFitness - generationFitnesses.bestFitness) / populationSize);
             foreach (var individual in population)
             {
-                _fitnessesSum += (Math.Abs(worstIndividual.GetFitness() - individual.GetFitness()) + min);
+                _fitnessesSum += (Math.Abs(generationFitnesses.worstFitness - individual.GetFitness()) + min);
             }
 
             for (int i = 0; i < _selectedParents.Length; i++)
@@ -123,7 +121,7 @@ namespace Genetic.Models
                 var _randIndividual = cache.GetRandomNext() % _fitnessesSum;
                 for (int j = 0; j < populationSize; j++)
                 {
-                    _randIndividual -= (Math.Abs(worstIndividual.GetFitness() - population[j].GetFitness()) + min);
+                    _randIndividual -= (Math.Abs(generationFitnesses.worstFitness - population[j].GetFitness()) + min);
                     if (_randIndividual <= 0)
                     {
                         _selectedParents[i] = population[j];
@@ -152,38 +150,27 @@ namespace Genetic.Models
                     population[i].Mutates();
                 }
             }
-            CountRates();
+            generationFitnesses.CountRates(population);
         }
 
-        private void CountRates()
+        public float GetFitnesses(FitnessType fitnessType)
         {
-            float _bestFitness = population[0].GetFitness();
-            float _worstFitness = population[0].GetFitness();
-            averageFitness = population[0].GetFitness();
-            bestIndividual = population[0];
-            worstIndividual = population[0];
-
-            for (int i = 1; i < population.Count; i++)
+            switch(fitnessType)
             {
-                averageFitness += population[i].GetFitness();
-                if (population[i].IsBetter(_bestFitness))
-                {
-                    _bestFitness = population[i].GetFitness();
-                    bestIndividual = population[i];
-                }
-                else if (!population[i].IsBetter(_worstFitness))
-                {
-                    _worstFitness = population[i].GetFitness();
-                    worstIndividual = population[i];
-                }
+                case FitnessType.BestFitness:
+                    return generationFitnesses.bestFitness;
+                case FitnessType.WorstFitness:
+                    return generationFitnesses.worstFitness;
+                case FitnessType.AverageFitness:
+                    return generationFitnesses.averageFitness;                    
             }
-            averageFitness /= population.Count;
+            return -1;
         }
 
         public override string ToString()
         {
-            return generationNumber + ";" + bestIndividual.GetFitness() + ";" +
-                averageFitness + ";" + worstIndividual.GetFitness();
+            return generationNumber + ";" + generationFitnesses.bestFitness + ";" +
+                generationFitnesses.averageFitness+ ";" + generationFitnesses.worstFitness;
         }
     }
 }

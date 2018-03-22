@@ -1,8 +1,9 @@
-﻿using System.Collections.Generic;
+﻿using Genetic.Models;
+using System;
+using System.Collections.Generic;
 using System.Text;
-using Genetic.Models;
 
-namespace Genetic.Logic
+namespace Genetic
 {
     public class GeneticAlgorithm<GeneKey, GeneValue>
     {
@@ -32,6 +33,8 @@ namespace Genetic.Logic
                     stringBuilder.Append(generations[i - 1].ToString() + ";"
                         + cache.GetCalculatedFitnessesCount() + "\n");
                 }
+                stringBuilder.Append(generations[geneticParameters.generationsCount - 1].ToString() + ";"
+                    + cache.GetCalculatedFitnessesCount() + "\n");
             }
         }
 
@@ -51,6 +54,22 @@ namespace Genetic.Logic
             _newGeneration.FillPopulation();
             _newGeneration.MutatePopulation(geneticParameters.mutationProb);
             return _newGeneration;
+        }
+
+        public float[] GetGenerationFitnesses(int generationNumber)
+        {
+            if (generationNumber < 1 && generationNumber > generations.Count)
+            {
+                generationNumber = 1;
+            }
+            float[] _fitnesses = new float[Enum.GetNames(typeof(FitnessType)).Length];
+            int i = 0;
+            foreach (var _fitneessType in Enum.GetValues(typeof(FitnessType)))
+            {
+                _fitnesses[i] = generations[generationNumber].GetFitnesses((FitnessType)_fitneessType);
+                i++;
+            }
+            return _fitnesses;
         }
 
         public override string ToString()

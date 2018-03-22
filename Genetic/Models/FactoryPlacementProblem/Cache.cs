@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Genetic.Models
+namespace Genetic.Models.FactoryPlacementProblem
 {
     public class Cache : ICache<int,int>
     { 

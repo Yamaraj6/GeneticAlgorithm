@@ -5,4 +5,9 @@
     <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FileOperations\FileOperations.csproj" />
+    <ProjectReference Include="..\Genetic\Genetic.csproj" />
+  </ItemGroup>
+
 </Project>
